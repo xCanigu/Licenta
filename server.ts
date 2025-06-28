@@ -224,7 +224,6 @@ HTTPserver.listen(HTTP_SERVER_PORT, () => {
 });
 
 /*
-// A se vedea arhitectura sistemului: https://github.com/NXP-CUP-B020/NXP-Cup-2024-PixyVectors/blob/constantin/WirelessComunication.drawio.pdf
 
 // Start the TCP server
 const tcpServer = net.createServer((socket) => {
