@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Trajectory CSV Viewer</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1"></script>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f2f4f8;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: #333;
+      color: white;
+      padding: 1rem 2rem;
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 1rem;
+      overflow: hidden;
+    }
+    canvas {
+      flex: 1;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 1200px;
+    }
+    input[type="file"] {
+      margin-bottom: 1rem;
+      padding: 0.5rem;
+      font-size: 1rem;
+    }
+    .controls {
+      margin-top: 10px;
+    }
+    .controls button {
+      margin: 0 0.5rem;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      border: none;
+      background: #333;
+      color: white;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    🚗 Trajectory CSV Visualizer
+  </header>
+  <main>
+    <input type="file" id="fileInput" accept=".csv">
+    <canvas id="trajectoryCanvas"></canvas>
+    <div class="controls">
+      <button id="zoomInBtn">🔍 Zoom In</button>
+      <button id="zoomOutBtn">🔎 Zoom Out</button>
+      <button id="resetZoomBtn">🔄 Reset Zoom</button>
+    </div>
+  </main>
+
+  <script>
+    const ctx = document.getElementById('trajectoryCanvas').getContext('2d');
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        datasets: [{
+          label: 'Trajectory Path',
+          data: [],
+          borderColor: 'red',
+          backgroundColor: 'rgba(255,0,0,0.2)',
+          fill: false,
+          tension: 0.2,
+          pointRadius: 2,
+        }]
+      },
+      options: {
+        animation: false,
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          zoom: {
+            pan: { enabled: false },
+            zoom: {
+              wheel: { enabled: false },
+              pinch: { enabled: false },
+              drag: { enabled: false },
+              mode: 'xy'
+            }
+          }
+        },
+        scales: {
+          x: {
+            type: 'linear',
+            title: { display: true, text: 'X Coordinate' }
+          },
+          y: {
+            type: 'linear',
+            reverse: true,
+            title: { display: true, text: 'Y Coordinate' }
+          }
+        }
+      }
+    });
+
+    document.getElementById('fileInput').addEventListener('change', function (e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        const lines = event.target.result.split('\n').slice(1); // Skip header
+        const data = [];
+
+        for (const line of lines) {
+          const [x, y] = line.split(',').map(Number);
+          if (!isNaN(x) && !isNaN(y)) {
+            data.push({ x, y });
+          }
+        }
+
+        chart.data.datasets[0].data = data;
+        chart.resetZoom();
+        chart.update();
+      };
+
+      reader.readAsText(file);
+    });
+
+    document.getElementById('zoomInBtn').addEventListener('click', () => {
+      chart.zoom(1.2);
+    });
+
+    document.getElementById('zoomOutBtn').addEventListener('click', () => {
+      chart.zoom(0.8);
+    });
+
+    document.getElementById('resetZoomBtn').addEventListener('click', () => {
+      chart.resetZoom();
+    });
+  </script>
+</body>
+</html>

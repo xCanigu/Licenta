@@ -1,0 +1,1891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Monitor</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background-color: #f9fafb;
+        }
+        h1 {
+            text-align: center;
+            width: 100%;
+            margin: 20px 0;
+            font-size: 2.5em;
+            color: #333;
+        }
+        h3 {
+            text-align: center;
+            width: 100%;
+            margin: 10px 0;
+            font-size: 1.5em;
+            color: #333;
+}
+
+        .container {
+            display: flex;
+            width: 90%;
+            max-width: 1200px;
+            justify-content: space-between;
+            padding: 30px;
+            background-color: #ffffff;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            margin-bottom: 40px;
+        }
+        .chart-container {
+            width: 55%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .chart {
+            border: 2px solid #ccc;
+            width: 100%;
+            height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #007bff;
+            font-size: 1.2em;
+            border-radius: 10px;
+            background-color: #fff;
+            padding: 10px;
+        }
+        .history {
+            border: 2px solid #ccc;
+            width: 100%;
+            height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #fff;
+            position: relative;
+            overflow-y: scroll;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        .history-label {
+            position: absolute;
+            top: -20px;
+            left: 10px;
+            background-color: #f0f2f5;
+            padding: 0 5px;
+        }
+        .form-container {
+            display: flex;
+            flex-wrap: wrap;
+            width: 41%;    
+        }
+        .form-container input {
+            margin-bottom: 15px;
+            padding: 12px;
+            border: 1px solid #d3d3d3;
+            border-radius: 5px;
+            width: 95%;
+            font-size: 1rem;
+        }
+        .form-container .form-group {
+            display: flex;
+            flex-direction: column;
+            width: 48%;
+            margin: 1%;
+        }
+        .form-container .form-group-wide {
+            width: 98%;
+        }
+        .form-container .form-group-last-row {
+            width: 48%;
+            margin: 1%;
+        }
+        .form-container input {
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        #sendButton {
+            padding: 10px 20px;
+            border: none;
+            background-color: #007bff;
+            color: #fff;
+            font-size: 1em;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s;
+            margin-top: 10px;
+            width: 100%;
+        }
+        #sendButton:hover {
+            background-color: #0056b3;
+        }
+        .start-stop-container {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+        }
+        .start-stop-container button {
+            padding: 10px 20px;
+            border: none;
+            font-size: 1em;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s;
+            width: 48%;
+        }
+        .start-button {
+            background-color: #28a745;
+            color: #fff;
+        }
+        .start-button:hover {
+            background-color: #218838;
+        }
+        .stop-button {
+            background-color: #dc3545;
+            color: #fff;
+        }
+        .stop-button:hover {
+            background-color: #c82333;
+        }
+       /* Toggle button styles for Real-time Parameters Section */
+       /* RTP Toggle button */
+        .toggle-button {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px;
+            cursor: pointer;
+            z-index: 1000;
+            width: 40px;
+            height: 120px;
+        }
+        .vertical-text {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            text-align: center;
+        }
+        /* Real-time Parameters Container */
+        .real-time-parameters-container {
+            position: absolute;
+            right: 0;
+            top: 100px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            display: none;
+            width: 350px;
+            z-index: 100;
+            transition: opacity 0.3s ease;
+        }
+        /* Close button inside Real-time Parameters window */
+        .close-rpt-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: red;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            padding: 5px 10px;
+            cursor: pointer;
+            z-index: 1001;
+        }
+        /* Add hover effect for Close button */
+        .close-rpt-btn:hover {
+            background-color: darkred;
+        }
+        .real-time-parameters {
+            width: 100%;
+        }
+        .real-time-parameters h2 {
+            margin-top: 0;
+            font-size: 1.5em;
+            color: #333;
+        }
+        .parameter {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .parameter   {
+            font-weight: bold;
+            color: #333;
+        }
+        .parameter span {
+            color: #007bff;
+        }
+        /* CSS for the new window and tabs */
+        /* Modes Toggle button */
+        /* Modes Toggle button */
+        #toggleModesButton {
+            position: absolute;
+            right: 0; /* Align it with the RTP button */
+            top: calc(50% + 140px); /* Offset it below the RTP button */
+            background-color: #28a745; /* Give it a distinct color */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px;
+            cursor: pointer;
+            z-index: 1000;
+            width: 40px;
+            height: 120px;
+        }
+        .modes-container {
+            position: absolute;
+            left: 50%;  
+            top: 50%;   
+            transform: translate(-50%, -50%);
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            width: 550px;
+            height: 500px;
+            overflow: auto;
+            resize: both; /* Enable resizing from corners */
+            z-index: 100;
+            cursor: move;
+        }
+        .tab-buttons {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        .tab-button {
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }      
+        .tab-content {
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        .tab-content.active {
+            display: flex; /* Ensures that active content uses flex layout */
+        }
+        .tab-content .form-group {
+            width: 49%; /* Ensures two columns */
+            margin-right: 2%; /* Optional margin to separate the two columns */
+            margin-bottom: 5px;
+            border-radius: 5px;
+        }
+        .tab-content .form-group-wide {
+            width: 98%; /* Use only for specific inputs that need to stretch across both columns */
+        }
+        .tab-content .form-group:nth-child(2n) {
+            margin-right: 0; /* Ensures that the right column doesn't have extra margin */
+        }
+        .close-modes-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: red;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .close-modes-btn:hover {
+            background-color: darkred;
+        }
+
+        .modes-input-group {
+            width: 90%; /* Reduce the width to fit two groups in one row */
+            margin-bottom: 0px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .modes-input-group label {
+            display: block;
+            margin-bottom: 2px;
+            font-weight: bold;
+            width: 100%;
+        }
+
+        .modes-input-group input {
+            width: 100%; /* Make inputs stretch to full width of the container */
+            padding: 5px;
+        }
+
+
+        .input-group {
+            margin-bottom: 0px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 1px;
+            font-weight: bold;
+            }
+
+        .input-group input {
+            width: 80%; /* Adjust based on your needs */
+            padding: 4px;
+            font-size: 14px;
+            margin: 5px;
+        }
+
+        label {
+            font-family: Arial, sans-serif; /* Replace with your desired font */
+            font-size: 10px; /* Adjust font size if necessary */
+            font-weight: bold; /* Optional: Make the font bold */
+            position: relative;
+            left: 5px;
+        }
+
+
+            .trajectory-container {
+            width: 600px; /* Fixed width */
+            height: 300px; /* Fixed height */
+            border: 2px solid #ccc; /* Border like your other charts */
+            border-radius: 10px;
+            background-color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden; /* Prevents unexpected growth */
+            margin-top: 20px; /* Adjust position */
+        }
+
+        #trajectoryChart {
+            width: 100% !important;
+            height: 100% !important;
+        }
+    </style>
+</head>
+
+<body>
+    <h1 id="pageTitle">Car Monitor</h1>
+    <div class="container">
+        <div class="chart-container">
+            <span id="kFps" style="float:right;"></span>
+            <span id="LoopTime"></span>
+            <span id="finishLineDetectedNow"></span>
+            <span id="finishLineDetected"></span>
+            <div class="chart">
+                <canvas id="chartCanvas"></canvas>
+            </div>
+            <div class="trajectory-container">
+                <canvas id="trajectoryChart"></canvas>
+            </div>
+            <div style="display: flex; justify-content: center; margin-top: 10px; gap: 10px;">
+                <button id="resetTrajectoryBtn" style="padding: 10px 20px; border: none; background-color: #dc3545; color: white; font-size: 1em; border-radius: 5px; cursor: pointer; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); transition: background-color 0.3s;">
+                  <i class="fas fa-redo-alt"></i> Reset Trajectory
+                </button>
+                <button id="exportTrajectoryBtn" style="padding: 10px 20px; border: none; background-color: #007bff; color: white; font-size: 1em; border-radius: 5px; cursor: pointer; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); transition: background-color 0.3s;">
+                  <i class="fas fa-download"></i> Export Trajectory
+                </button>
+              </div>  
+            <div class="history">
+                <span class="history-label">History of data sent</span>
+                <i class="fas fa-trash" id="clearHistoryButton" style="cursor:pointer;float:right;margin-right:10px;color:red;"></i>
+                <div id="history">
+                </div>
+            </div>      
+        </div>
+        <div class="form-container">
+            <div class="form-group">
+                <div class="input-group">
+                    <label for="inputId">Enable Car Engine</label>
+                    <input type="number" id="enable_car_engine">
+                    <label for="inputId">Lookahead Min Distance (cm)</label>                    
+                    <input type="number" id="lookahead_min_distance_cm" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="input-group">
+                    <label for="inputId">Lookahead Max Distance (cm)</label>
+                    <input type="number" id="lookahead_max_distance_cm" step="0.01">
+                    <label for="inputId">Emergency Brake Distance (cm)</label>
+                    <input type="number" id="emergency_break_distance_cm" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="input-group">
+                    <label for="inputId">Min Speed</label>
+                    <input type="number" id="min_speed" step="0.01">
+                    <label for="inputId">Max Speed</label>
+                    <input type="number" id="max_speed" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="input-group">
+                    <label for="inputId">Lane Width Vector Unit Real</label>
+                    <input type="number" id="lane_width_vector_unit_real" step="0.01">
+                    <label for="inputId">Black Color Threshold</label>
+                    <input type="number" id="black_color_treshold" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="input-group">
+                    <label for="inputId">Enable Car Steering Wheel</label>
+                    <input type="number" id="enable_car_steering_wheel">
+                    <label for="inputId">Emergency Brake Min Speed</label>
+                    <input type="number" id="emergency_brake_min_speed" step="0.01">
+                </div>
+
+            </div>
+            <div class="form-group">
+                <div class="input-group">
+                    <label for="inputId">Emergency Brake Distance from Obstacle (cm)</label>
+                    <input type="number" id="emergency_brake_distance_from_obstacle_cm" step="0.01">
+                    <label for="inputId">Enable Emergency Brake</label>
+                    <input type="number" id="enable_emergency_brake">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="input-group">     
+                    <label for="inputId">Enable Pixy Vector Approximation Soft</label>
+                    <input type="number" id="enable_pixy_vector_approximation_soft">
+                    <label for="inputId">Enable Distance Sensor 1 Soft</label>
+                    <input type="number" id="enable_distance_sensor1_soft">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="input-group">
+                    <label for="inputId">Enable Distance Sensor 2 Soft</label>
+                    <input type="number" id="enable_distance_sensor2_soft">
+                    <label for="inputId">Enable Distance Sensor 3 Soft</label>
+                    <input type="number" id="enable_distance_sensor3_soft">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="input-group">
+                    <label for="inputId">Emergency Brake Enable Delay</label>
+                    <input type="number" id="emergency_brake_enable_delay" step="0.01">
+                    <label for="inputId">Steering Wheel Angle Offset</label>
+                    <input type="number" id="steering_wheel_angle_offset" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="input-group">
+                    <label for="inputId">Max Speed after Emergency Brake Delay</label>
+                    <input type="number" id="max_speed_after_emergency_brake_delay" step="0.01">
+                    <label for="inputId">Min Axis Angle Vector</label>
+                    <input type="number" id="min_axis_angle_vector" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="input-group">
+                    <label for="inputId">Car Speed Ki</label>
+                    <input type="number" id="car_speed_ki" step="0.01">
+                    <label for="inputId">Car Speed Kd</label>
+                    <input type="number" id="car_speed_kd" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="input-group">
+                    <label for="inputId">Enable finish line detection soft</label>
+                    <input type="number" id="enable_finish_line_detection" step="0.01">
+                    <label for="inputId">Car Speed Ki Min/Max Impact</label>
+                    <input type="number" id="car_speed_ki_min_max_impact" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="input-group">
+                    <label for="inputId">Max error angle degrees(finish line)</label>
+                    <input type="number" id="max_error_angle_degrees" step="0.01">
+                    <label for="inputId">Enable Remote Start/Stop Soft</label>
+                    <input type="number" id="enable_remote_start_stop_soft">
+                </div>
+            </div>
+            <button id="sendButton">Send</button>
+            <div class="start-stop-container">
+                <button class="start-button" id="startCarButton">Start the car (w)</button>
+                <button class="stop-button" id="stopCarButton">Stop the car (s)</button>
+                <label style="margin-top: 10px;">
+                    <input type="checkbox" id="simulationModeToggle">
+                    Enable Simulation Mode
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Real-time Parameters Section -->
+    <button class="toggle-button" id="toggleButton">
+        <div class="vertical-text">RTP</div>
+    </button>
+
+    <!-- Toggle button for Modes Section -->
+    <button class="toggle-button" id="toggleModesButton">
+        <div class="vertical-text">Modes</div>
+    </button>
+
+    <!-- Modes Section Window -->
+    <div class="modes-container" id="modesParams" style="display:none;">
+        <!--    <div class="modes-header"></div>  This is the draggable header -->  
+        <button class="close-modes-btn" id="closeModesButton">X</button>
+        <h2>Modes</h2>
+        <!-- Tab Buttons -->
+        <div class="tab-buttons">
+            <button id="debugTab" class="tab-button">Debug</button>
+            <button id="raceTab" class="tab-button">Race</button>
+            <button id="normalTab" class="tab-button">Normal</button>
+        </div>
+
+        <!-- Tab Content -->
+        <div id="debugContent" class="tab-content">
+            <h3>Debug Mode</h3>
+            <div class="form-group">
+                <div class="modes-input-group">
+                    <label for="inputId">Enable Car Engine</label>
+                    <input type="number" id="debug_enable_car_engine">
+                    <label for="inputId">Lookahead Min Distance (cm)</label>                    
+                    <input type="number" id="debug_lookahead_min_distance_cm" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="modes-input-group">
+                    <label for="inputId">Lookahead Max Distance (cm)</label>
+                    <input type="number" id="debug_lookahead_max_distance_cm" step="0.01">
+                    <label for="inputId">Emergency Brake Distance (cm)</label>
+                    <input type="number" id="debug_emergency_break_distance_cm" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="modes-input-group">
+                    <label for="inputId">Min Speed</label>
+                    <input type="number" id="debug_min_speed" step="0.01">
+                    <label for="inputId">Max Speed</label>
+                    <input type="number" id="debug_max_speed" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="modes-input-group">
+                    <label for="inputId">Lane Width Vector Unit Real</label>
+                    <input type="number" id="debug_lane_width_vector_unit_real" step="0.01">
+                    <label for="inputId">Black Color Threshold</label>
+                    <input type="number" id="debug_black_color_treshold" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="modes-input-group">
+                    <label for="inputId">Enable Car Steering Wheel</label>
+                    <input type="number" id="debug_enable_car_steering_wheel">
+                    <label for="inputId">Emergency Brake Min Speed</label>
+                    <input type="number" id="debug_emergency_brake_min_speed" step="0.01">
+                </div>
+
+            </div>
+            <div class="form-group">
+                <div class="modes-input-group">
+                    <label for="inputId">Emergency Brake Distance from Obstacle (cm)</label>
+                    <input type="number" id="debug_emergency_brake_distance_from_obstacle_cm" step="0.01">
+                    <label for="inputId">Enable Emergency Brake</label>
+                    <input type="number" id="debug_enable_emergency_brake">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="modes-input-group">     
+                    <label for="inputId">Enable Pixy Vector Approximation Soft</label>
+                    <input type="number" id="debug_enable_pixy_vector_approximation_soft">
+                    <label for="inputId">Enable Distance Sensor 1 Soft</label>
+                    <input type="number" id="debug_enable_distance_sensor1_soft">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="modes-input-group">
+                    <label for="inputId">Enable Distance Sensor 2 Soft</label>
+                    <input type="number" id="debug_enable_distance_sensor2_soft">
+                    <label for="inputId">Enable Distance Sensor 3 Soft</label>
+                    <input type="number" id="debug_enable_distance_sensor3_soft">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="modes-input-group">
+                    <label for="inputId">Emergency Brake Enable Delay</label>
+                    <input type="number" id="debug_emergency_brake_enable_delay" step="0.01">
+                    <label for="inputId">Steering Wheel Angle Offset</label>
+                    <input type="number" id="debug_steering_wheel_angle_offset" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="modes-input-group">
+                    <label for="inputId">Max Speed after Emergency Brake Delay</label>
+                    <input type="number" id="debug_max_speed_after_emergency_brake_delay" step="0.01">
+                    <label for="inputId">Min Axis Angle Vector</label>
+                    <input type="number" id="debug_min_axis_angle_vector" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="modes-input-group">
+                    <label for="inputId">Car Speed Ki</label>
+                    <input type="number" id="debug_car_speed_ki" step="0.01">
+                    <label for="inputId">Car Speed Kd</label>
+                    <input type="number" id="debug_car_speed_kd" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="modes-input-group">
+                    <label for="inputId">Enable finish line detection soft</label>
+                    <input type="number" id="debug_enable_finish_line_detection" step="0.01">
+                    <label for="inputId">Car Speed Ki Min/Max Impact</label>
+                    <input type="number" id="debug_car_speed_ki_min_max_impact" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="modes-input-group">
+                    <label for="inputId">Finish Line Angle Tolerance</label>
+                    <input type="number" id="debug_max_error_angle_degrees" step="0.01">
+                    <label for="inputId">Enable Remote Start/Stop Soft</label>
+                    <input type="number" id="debug_enable_remote_start_stop_soft">
+                </div>
+            </div>
+            <button id="sendDebugButton">Send Debug</button>
+            <button id="clearDebugButton">Clear Debug</button>
+        </div>
+
+        <div id="raceContent" class="tab-content" style="display:none;">
+            <h3>Race Mode</h3>
+            <div class="form-group">
+                <div class="modes-input-group">
+                    <label for="inputId">Enable Car Engine</label>
+                    <input type="number" id="race_enable_car_engine">
+                    <label for="inputId">Lookahead Min Distance (cm)</label>                    
+                    <input type="number" id="race_lookahead_min_distance_cm" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="modes-input-group">
+                    <label for="inputId">Lookahead Max Distance (cm)</label>
+                    <input type="number" id="race_lookahead_max_distance_cm" step="0.01">
+                    <label for="inputId">Emergency Brake Distance (cm)</label>
+                    <input type="number" id="race_emergency_break_distance_cm" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="modes-input-group">
+                    <label for="inputId">Min Speed</label>
+                    <input type="number" id="race_min_speed" step="0.01">
+                    <label for="inputId">Max Speed</label>
+                    <input type="number" id="race_max_speed" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="modes-input-group">
+                    <label for="inputId">Lane Width Vector Unit Real</label>
+                    <input type="number" id="race_lane_width_vector_unit_real" step="0.01">
+                    <label for="inputId">Black Color Threshold</label>
+                    <input type="number" id="race_black_color_treshold" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="modes-input-group">
+                    <label for="inputId">Enable Car Steering Wheel</label>
+                    <input type="number" id="race_enable_car_steering_wheel">
+                    <label for="inputId">Emergency Brake Min Speed</label>
+                    <input type="number" id="race_emergency_brake_min_speed" step="0.01">
+                </div>
+
+            </div>
+            <div class="form-group">
+                <div class="modes-input-group">
+                    <label for="inputId">Emergency Brake Distance from Obstacle (cm)</label>
+                    <input type="number" id="race_emergency_brake_distance_from_obstacle_cm" step="0.01">
+                    <label for="inputId">Enable Emergency Brake</label>
+                    <input type="number" id="race_enable_emergency_brake">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="modes-input-group">     
+                    <label for="inputId">Enable Pixy Vector Approximation Soft</label>
+                    <input type="number" id="race_enable_pixy_vector_approximation_soft">
+                    <label for="inputId">Enable Distance Sensor 1 Soft</label>
+                    <input type="number" id="race_enable_distance_sensor1_soft">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="modes-input-group">
+                    <label for="inputId">Enable Distance Sensor 2 Soft</label>
+                    <input type="number" id="race_enable_distance_sensor2_soft">
+                    <label for="inputId">Enable Distance Sensor 3 Soft</label>
+                    <input type="number" id="race_enable_distance_sensor3_soft">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="modes-input-group">
+                    <label for="inputId">Emergency Brake Enable Delay</label>
+                    <input type="number" id="race_emergency_brake_enable_delay" step="0.01">
+                    <label for="inputId">Steering Wheel Angle Offset</label>
+                    <input type="number" id="race_steering_wheel_angle_offset" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="modes-input-group">
+                    <label for="inputId">Max Speed after Emergency Brake Delay</label>
+                    <input type="number" id="race_max_speed_after_emergency_brake_delay" step="0.01">
+                    <label for="inputId">Min Axis Angle Vector</label>
+                    <input type="number" id="race_min_axis_angle_vector" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="modes-input-group">
+                    <label for="inputId">Car Speed Ki</label>
+                    <input type="number" id="race_car_speed_ki" step="0.01">
+                    <label for="inputId">Car Speed Kd</label>
+                    <input type="number" id="race_car_speed_kd" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="modes-input-group">
+                    <label for="inputId">Enable finish line detection soft</label>
+                    <input type="number" id="race_enable_finish_line_detection" step="0.01">
+                    <label for="inputId">Car Speed Ki Min/Max Impact</label>
+                    <input type="number" id="race_car_speed_ki_min_max_impact" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="modes-input-group">
+                    <label for="inputId">Finish Line Angle Tolerance</label>
+                    <input type="number" id="race_max_error_angle_degrees" step="0.01">
+                    <label for="inputId">Enable Remote Start/Stop Soft</label>
+                    <input type="number" id="race_enable_remote_start_stop_soft">
+                </div>
+            </div>
+            <button id="sendRaceButton">Send Race</button>
+            <button id="clearRaceButton">Clear Race</button>
+        </div>
+    
+        <div id="normalContent" class="tab-content" style="display:none;">
+            <h3>Normal Mode</h3>
+            <div class="form-group">
+                <div class="modes-input-group">
+                    <label for="inputId">Enable Car Engine</label>
+                    <input type="number" id="normal_enable_car_engine">
+                    <label for="inputId">Lookahead Min Distance (cm)</label>                    
+                    <input type="number" id="normal_lookahead_min_distance_cm" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="modes-input-group">
+                    <label for="inputId">Lookahead Max Distance (cm)</label>
+                    <input type="number" id="normal_lookahead_max_distance_cm" step="0.01">
+                    <label for="inputId">Emergency Brake Distance (cm)</label>
+                    <input type="number" id="normal_emergency_break_distance_cm" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="modes-input-group">
+                    <label for="inputId">Min Speed</label>
+                    <input type="number" id="normal_min_speed" step="0.01">
+                    <label for="inputId">Max Speed</label>
+                    <input type="number" id="normal_max_speed" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="modes-input-group">
+                    <label for="inputId">Lane Width Vector Unit Real</label>
+                    <input type="number" id="normal_lane_width_vector_unit_real" step="0.01">
+                    <label for="inputId">Black Color Threshold</label>
+                    <input type="number" id="normal_black_color_treshold" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="modes-input-group">
+                    <label for="inputId">Enable Car Steering Wheel</label>
+                    <input type="number" id="normal_enable_car_steering_wheel">
+                    <label for="inputId">Emergency Brake Min Speed</label>
+                    <input type="number" id="normal_emergency_brake_min_speed" step="0.01">
+                </div>
+
+            </div>
+            <div class="form-group">
+                <div class="modes-input-group">
+                    <label for="inputId">Emergency Brake Distance from Obstacle (cm)</label>
+                    <input type="number" id="normal_emergency_brake_distance_from_obstacle_cm" step="0.01">
+                    <label for="inputId">Enable Emergency Brake</label>
+                    <input type="number" id="normal_enable_emergency_brake">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="modes-input-group">     
+                    <label for="inputId">Enable Pixy Vector Approximation Soft</label>
+                    <input type="number" id="normal_enable_pixy_vector_approximation_soft">
+                    <label for="inputId">Enable Distance Sensor 1 Soft</label>
+                    <input type="number" id="normal_enable_distance_sensor1_soft">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="modes-input-group">
+                    <label for="inputId">Enable Distance Sensor 2 Soft</label>
+                    <input type="number" id="normal_enable_distance_sensor2_soft">
+                    <label for="inputId">Enable Distance Sensor 3 Soft</label>
+                    <input type="number" id="normal_enable_distance_sensor3_soft">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="modes-input-group">
+                    <label for="inputId">Emergency Brake Enable Delay</label>
+                    <input type="number" id="normal_emergency_brake_enable_delay" step="0.01">
+                    <label for="inputId">Steering Wheel Angle Offset</label>
+                    <input type="number" id="normal_steering_wheel_angle_offset" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="modes-input-group">
+                    <label for="inputId">Max Speed after Emergency Brake Delay</label>
+                    <input type="number" id="normal_max_speed_after_emergency_brake_delay" step="0.01">
+                    <label for="inputId">Min Axis Angle Vector</label>
+                    <input type="number" id="normal_min_axis_angle_vector" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="modes-input-group">
+                    <label for="inputId">Car Speed Ki</label>
+                    <input type="number" id="normal_car_speed_ki" step="0.01">
+                    <label for="inputId">Car Speed Kd</label>
+                    <input type="number" id="normal_car_speed_kd" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="modes-input-group">
+                    <label for="inputId">Enable finish line detection soft</label>
+                    <input type="number" id="normal_enable_finish_line_detection" step="0.01">
+                    <label for="inputId">Car Speed Ki Min/Max Impact</label>
+                    <input type="number" id="normal_car_speed_ki_min_max_impact" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="modes-input-group">
+                    <label for="inputId">Finish Line Angle Tolerance</label>
+                    <input type="number" id="normal_max_error_angle_degrees" step="0.01">
+                    <label for="inputId">Enable Remote Start/Stop Soft</label>
+                    <input type="number" id="normal_enable_remote_start_stop_soft">
+                </div>
+            </div>
+            <button id="sendNormalButton">Send Normal</button>
+            <button id="clearNormalButton">Clear Normal</button>
+        </div>
+        <div class="resize-handle"></div> <!-- This is the handle for resizing -->
+    </div>
+
+    <!-- Real-time Parameters Section -->
+    <div class="real-time-parameters-container" id="realTimeParams">
+        <div class="real-time-parameters">
+            <!-- Close button -->
+            <button class="close-rpt-btn" id="closeRTPButton">X</button>
+            <div class="real-time-parameters">
+                <h2>Real-time Parameters</h2>
+                <div class="parameter">
+                    <div>Steering Angle:</div>
+                    <span id="realTimeSteeringAngle">0</span>
+                </div>
+                <div class="parameter">
+                    <div>Car Acceleration:</div>
+                    <span id="realTimeCarAcceleration">0</span>
+                </div>
+                <div class="parameter">
+                    <div>Front Obstacle Distance:</div>
+                    <span id="realTimeFrontObstacleDistance">0</span>
+                </div>
+                <div class="parameter">
+                    <div>Look Ahead Distance:</div>
+                    <span id="realTimeLookAheadDistance">0</span>
+                </div>
+                <div class="parameter">
+                    <div>Car Speed:</div>
+                    <span id="realTimeCarSpeed">0</span>
+                </div>
+                <div class="parameter">
+                    <div>Loop Time:</div>
+                    <span id="realTimeLoopTime">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script>
+//*******************************************************************************************************************
+//*******************************************************************************************************************
+//************************************************ VARIABLES ********************************************************
+//*******************************************************************************************************************
+//*******************************************************************************************************************
+
+        // Handle the Modes Window
+        const toggleModesButton = document.getElementById('toggleModesButton');
+        const modesParams = document.getElementById('modesParams');
+        const closeModesButton = document.getElementById('closeModesButton');
+
+        let currentTab = null;// Mode window
+        // Handle Tabs
+        const debugTab = document.getElementById('debugTab');
+        const raceTab = document.getElementById('raceTab');
+        const normalTab = document.getElementById('normalTab');
+
+        const debugContent = document.getElementById('debugContent');
+        const raceContent = document.getElementById('raceContent');
+        const normalContent = document.getElementById('normalContent');
+
+        const carIPv4 = window.location.pathname.split('/').pop();
+        let total_messages_recv = 0;
+        let fps = 0;
+        let fps_refresh_ms = 100;
+        const ws = new WebSocket('ws://' + window.location.host + '/car-monitor/' + carIPv4);
+        
+        const ctx = document.getElementById('chartCanvas').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                datasets: [
+                {
+                        label: 'Left Line',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        data: [],
+                        fill: false,
+                    },
+                    {
+                        label: 'Right Line',
+                        borderColor: 'rgba(153, 102, 255, 1)',
+                        backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                        data: [],
+                        fill: false,
+                    },
+                    {
+                        label: 'Middle Line',
+                        borderColor: 'rgba(0, 0, 0, 1)',
+                        backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                        data: [],
+                        fill: false,
+                    },
+                    {
+                        label: 'Left finish line',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        data: [],
+                        fill: false,
+                    },
+                    {
+                        label: 'Right finish line',
+                        borderColor: 'rgba(153, 102, 255, 1)',
+                        backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                        data: [],
+                        fill: false,
+                    }
+                ]
+            },
+            options: {
+                scales: {
+                    x: {
+                        type: 'linear',
+                        position: 'bottom',
+                        min: 0,
+                        max: 78
+                    },
+                    y: {
+                        min: 0,
+                        max: 51
+                    }
+                },
+                animation: false
+            }
+        });
+
+        const kFps = document.getElementById('kFps');
+        const LoopTime = document.getElementById('LoopTime');
+        const finishLineDetectedNow = document.getElementById('finishLineDetectedNow');
+        const finishLineDetected = document.getElementById('finishLineDetected');
+
+        let lastUpdateTime = Date.now();
+        const updateInterval = 50;
+
+
+        // Get the toggle button and real-time parameters section
+        const toggleButton = document.getElementById('toggleButton');
+        const realTimeParams = document.getElementById('realTimeParams');
+        const closeRTPButton = document.getElementById('closeRTPButton');
+
+        let lastOpenedTab = null;
+
+        const trajectoryCtx = document.getElementById('trajectoryChart').getContext('2d');
+
+        const trajectoryChart = new Chart(trajectoryCtx, {
+            type: 'line',
+            data: {
+                datasets: [
+                    {
+                        label: 'Trajectory Path',
+                        borderColor: 'red',
+                        backgroundColor: 'rgba(255, 0, 0, 0.3)',
+                        data: [],
+                        fill: false,
+                        showLine: true,
+                        pointRadius: 2
+                    },
+                    {
+                        label: 'Car Position',
+                        borderColor: 'black',
+                        backgroundColor: 'black',
+                        data: [],
+                        fill: false,
+                        showLine: false,
+                        pointRadius: 5, // 🔴 bigger dot
+                        pointStyle: 'circle'
+                    }
+                ]
+            },
+            options: {
+                responsive: false,
+                maintainAspectRatio: false,
+                animation: false,
+                scales: {
+                    x: { min: 0, max: 80 },
+                    y: { min: 0, max: 52 }
+                }
+            }
+        });
+
+        let persistentFinishLineDetected = 0;
+
+
+//*******************************************************************************************************************
+//*******************************************************************************************************************
+//***************************************** EVENTS LISTENERS ********************************************************
+//******************************************************************************************************************
+//*******************************************************************************************************************
+
+
+        toggleModesButton.addEventListener('click', () => {
+            modesParams.style.display = 'block';
+            toggleModesButton.style.display = 'none';
+        });
+
+        closeModesButton.addEventListener('click', () => {
+            modesParams.style.display = 'none';
+            toggleModesButton.style.display = 'block';
+        });
+
+        debugTab.addEventListener('click', () => {
+            showTab(debugContent);
+        });
+
+        raceTab.addEventListener('click', () => {
+                showTab(raceContent);
+            });
+
+        normalTab.addEventListener('click', () => {
+                showTab(normalContent);
+            });
+
+        // Attach event listeners to the buttons
+        document.getElementById('debugTab').addEventListener('click', () => {
+            toggleTab(document.getElementById('debugContent'), 'debugTab');
+        });
+
+        document.getElementById('raceTab').addEventListener('click', () => {
+            toggleTab(document.getElementById('raceContent'), 'raceTab');
+        });
+
+        document.getElementById('normalTab').addEventListener('click', () => {
+            toggleTab(document.getElementById('normalContent'), 'normalTab');
+        });
+
+        // Add listeners for sending data in each mode
+        document.getElementById('sendDebugButton').addEventListener('click', () => {
+            const data = {
+                param1: document.getElementById('debug_lane_width_vector_unit_real').value,
+                param2: document.getElementById('debug_lookahead_min_distance_cm').value,
+                param3: document.getElementById('debug_lookahead_max_distance_cm').value,
+                param4: document.getElementById('debug_emergency_break_distance_cm').value,
+                param5: document.getElementById('debug_min_speed').value,
+                param6: document.getElementById('debug_max_speed').value,
+                param7: document.getElementById('debug_black_color_treshold').value,
+                param8: document.getElementById('debug_enable_car_engine').value,
+                param9: document.getElementById('debug_enable_car_steering_wheel').value,
+                param10: document.getElementById('debug_emergency_brake_min_speed').value,
+                param11: document.getElementById('debug_emergency_brake_distance_from_obstacle_cm').value,
+                param12: document.getElementById('debug_enable_emergency_brake').value,
+                param13: document.getElementById('debug_enable_pixy_vector_approximation_soft').value,
+                param14: document.getElementById('debug_enable_distance_sensor1_soft').value,
+                param15: document.getElementById('debug_enable_distance_sensor2_soft').value,
+                param16: document.getElementById('debug_emergency_brake_enable_delay').value,
+                param17: document.getElementById('debug_steering_wheel_angle_offset').value,
+                param18: document.getElementById('debug_enable_distance_sensor3_soft').value,
+                param19: document.getElementById('debug_min_axis_angle_vector').value,
+                param20: document.getElementById('debug_max_speed_after_emergency_brake_delay').value,
+                param21: document.getElementById('debug_enable_remote_start_stop_soft').value,
+                param22: document.getElementById('debug_car_speed_ki').value,
+                param23: document.getElementById('debug_car_speed_kd').value,
+                param24: document.getElementById('debug_enable_finish_line_detection').value,
+                param25: document.getElementById('debug_car_speed_ki_min_max_impact').value,
+                param26: document.getElementById('debug_max_error_angle_degrees').value,
+            };
+            SendParametersToCar(ws, data);
+        });
+
+        document.getElementById('sendRaceButton').addEventListener('click', () => {
+            const data = {
+                param1: document.getElementById('race_lane_width_vector_unit_real').value,
+                param2: document.getElementById('race_lookahead_min_distance_cm').value,
+                param3: document.getElementById('race_lookahead_max_distance_cm').value,
+                param4: document.getElementById('race_emergency_break_distance_cm').value,
+                param5: document.getElementById('race_min_speed').value,
+                param6: document.getElementById('race_max_speed').value,
+                param7: document.getElementById('race_black_color_treshold').value,
+                param8: document.getElementById('race_enable_car_engine').value,
+                param9: document.getElementById('race_enable_car_steering_wheel').value,
+                param10: document.getElementById('race_emergency_brake_min_speed').value,
+                param11: document.getElementById('race_emergency_brake_distance_from_obstacle_cm').value,
+                param12: document.getElementById('race_enable_emergency_brake').value,
+                param13: document.getElementById('race_enable_pixy_vector_approximation_soft').value,
+                param14: document.getElementById('race_enable_distance_sensor1_soft').value,
+                param15: document.getElementById('race_enable_distance_sensor2_soft').value,
+                param16: document.getElementById('race_emergency_brake_enable_delay').value,
+                param17: document.getElementById('race_steering_wheel_angle_offset').value,
+                param18: document.getElementById('race_enable_distance_sensor3_soft').value,
+                param19: document.getElementById('race_min_axis_angle_vector').value,
+                param20: document.getElementById('race_max_speed_after_emergency_brake_delay').value,
+                param21: document.getElementById('race_enable_remote_start_stop_soft').value,
+                param22: document.getElementById('race_car_speed_ki').value,
+                param23: document.getElementById('race_car_speed_kd').value,
+                param24: document.getElementById('race_enable_finish_line_detection').value,
+                param25: document.getElementById('race_car_speed_ki_min_max_impact').value,
+                param26: document.getElementById('race_max_error_angle_degrees').value,
+            };
+            SendParametersToCar(ws, data);
+        });
+
+        document.getElementById('sendNormalButton').addEventListener('click', () => {
+            const data = {
+                param1: document.getElementById('normal_lane_width_vector_unit_real').value,
+                param2: document.getElementById('normal_lookahead_min_distance_cm').value,
+                param3: document.getElementById('normal_lookahead_max_distance_cm').value,
+                param4: document.getElementById('normal_emergency_break_distance_cm').value,
+                param5: document.getElementById('normal_min_speed').value,
+                param6: document.getElementById('normal_max_speed').value,
+                param7: document.getElementById('normal_black_color_treshold').value,
+                param8: document.getElementById('normal_enable_car_engine').value,
+                param9: document.getElementById('normal_enable_car_steering_wheel').value,
+                param10: document.getElementById('normal_emergency_brake_min_speed').value,
+                param11: document.getElementById('normal_emergency_brake_distance_from_obstacle_cm').value,
+                param12: document.getElementById('normal_enable_emergency_brake').value,
+                param13: document.getElementById('normal_enable_pixy_vector_approximation_soft').value,
+                param14: document.getElementById('normal_enable_distance_sensor1_soft').value,
+                param15: document.getElementById('normal_enable_distance_sensor2_soft').value,
+                param16: document.getElementById('normal_emergency_brake_enable_delay').value,
+                param17: document.getElementById('normal_steering_wheel_angle_offset').value,
+                param18: document.getElementById('normal_enable_distance_sensor3_soft').value,
+                param19: document.getElementById('normal_min_axis_angle_vector').value,
+                param20: document.getElementById('normal_max_speed_after_emergency_brake_delay').value,
+                param21: document.getElementById('normal_enable_remote_start_stop_soft').value,
+                param22: document.getElementById('normal_car_speed_ki').value,
+                param23: document.getElementById('normal_car_speed_kd').value,
+                param24: document.getElementById('normal_enable_finish_line_detection').value,
+                param25: document.getElementById('normal_car_speed_ki_min_max_impact').value,
+                param26: document.getElementById('normal_max_error_angle_degrees').value,
+            };
+            SendParametersToCar(ws, data);
+        });
+
+
+        document.getElementById('sendButton').addEventListener('click', () => {
+            const data = ReadAllCarParameters();
+            SendParametersToCar(ws, data);
+
+            // Add the sent data to the history with timestamp
+            const historyDiv = document.getElementById('history');
+            const newHistoryItem = document.createElement('div');
+            const timestamp = new Date().toLocaleTimeString();
+            newHistoryItem.innerHTML = `-------------------------------------------<br><strong>${timestamp}</strong><br>` + 
+                Object.entries(data).map(([key, value]) => `${key}: ${value}`).join('<br><br>');
+            
+            historyDiv.insertBefore(newHistoryItem, historyDiv.firstChild);  // Insert at the top
+        });
+
+        document.getElementById('startCarButton').addEventListener('click', () => {
+            persistentFinishLineDetected = 0;
+            let data = ReadAllCarParameters();
+            data.enable_car_engine = '1';
+            SendParametersToCar(ws, data);
+
+            // Add the sent data to the history with timestamp
+            const historyDiv = document.getElementById('history');
+            const newHistoryItem = document.createElement('div');
+            const timestamp = new Date().toLocaleTimeString();
+            newHistoryItem.innerHTML = `-------------------------------------------<br><strong>${timestamp}</strong><br>` + 
+                Object.entries(data).map(([key, value]) => `${key}: ${value}`).join('<br><br>');
+            
+            historyDiv.insertBefore(newHistoryItem, historyDiv.firstChild);  // Insert at the top
+        });
+
+        document.getElementById('stopCarButton').addEventListener('click', () => {
+            let data = ReadAllCarParameters();
+            data.enable_car_engine = '0';
+            SendParametersToCar(ws, data);
+
+            // Add the sent data to the history with timestamp
+            const historyDiv = document.getElementById('history');
+            const newHistoryItem = document.createElement('div');
+            const timestamp = new Date().toLocaleTimeString();
+            newHistoryItem.innerHTML = `-------------------------------------------<br><strong>${timestamp}</strong><br>` + 
+                Object.entries(data).map(([key, value]) => `${key}: ${value}`).join('<br><br>');
+            
+            historyDiv.insertBefore(newHistoryItem, historyDiv.firstChild);  // Insert at the top
+        });
+
+        // Add a click listener to the trash bin icon to clear the history
+        document.getElementById('clearHistoryButton').addEventListener('click', () => {
+            const historyDiv = document.getElementById('history');
+            historyDiv.innerHTML = ''; // Clear the history
+            console.log('History cleared'); // Optional: Console log to show action is triggered
+        });
+
+
+        // Event listener for keyboard input to start the car
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'w') {
+                persistentFinishLineDetected = 0;
+                let data = ReadAllCarParameters();
+                data.enable_car_engine = '1';
+                SendParametersToCar(ws, data);
+
+                // Add the sent data to the history with timestamp
+                const historyDiv = document.getElementById('history');
+                const newHistoryItem = document.createElement('div');
+                const timestamp = new Date().toLocaleTimeString();
+                newHistoryItem.innerHTML = `-------------------------------------------<br><strong>${timestamp}</strong><br>` + 
+                    Object.entries(data).map(([key, value]) => `${key}: ${value}`).join('<br><br>');
+                
+                historyDiv.insertBefore(newHistoryItem, historyDiv.firstChild);  // Insert at the top
+            } else if (event.key === 's') {
+                let data = ReadAllCarParameters();
+                data.enable_car_engine = '0';
+                SendParametersToCar(ws, data);
+
+                // Add the sent data to the history with timestamp
+                const historyDiv = document.getElementById('history');
+                const newHistoryItem = document.createElement('div');
+                const timestamp = new Date().toLocaleTimeString();
+                newHistoryItem.innerHTML = `-------------------------------------------<br><strong>${timestamp}</strong><br>` + 
+                    Object.entries(data).map(([key, value]) => `${key}: ${value}`).join('<br><br>');
+                
+                historyDiv.insertBefore(newHistoryItem, historyDiv.firstChild);  // Insert at the top
+            }
+        });
+
+        // Add event listener for toggling the real-time parameters section
+        toggleButton.addEventListener('click', () => {
+            // Show the RTP window and hide the button
+            realTimeParams.style.display = 'block';
+            toggleButton.style.display = 'none';
+        });
+
+        // Close button inside the RTP window
+        closeRTPButton.addEventListener('click', () => {
+            // Hide the RTP window and show the toggle button again
+            realTimeParams.style.display = 'none';
+            toggleButton.style.display = 'block';
+        });
+
+        // Load data when the page is loaded
+        window.addEventListener('load', loadDataFromLocalStorage);
+
+        // Call the function to make the modes container draggable
+        dragElement(document.getElementById("modesParams"));
+
+        // Attach event listeners for the "Send" buttons to sync values to the form-container
+        document.getElementById('sendDebugButton').addEventListener('click', () => {
+            syncToFormContainer('debug');
+            saveFormContainerData();  // Save after syncing from the mode
+        });
+
+        document.getElementById('sendRaceButton').addEventListener('click', () => {
+            syncToFormContainer('race');
+            saveFormContainerData();  // Save after syncing from the mode
+        });
+
+        document.getElementById('sendNormalButton').addEventListener('click', () => {
+            syncToFormContainer('normal');
+            saveFormContainerData();  // Save after syncing from the mode
+        });
+
+        // Load data for each mode when the user switches modes
+        document.getElementById('debugTab').addEventListener('click', () => {
+            trackLastSelectedMode('debug');
+        });
+
+        document.getElementById('raceTab').addEventListener('click', () => {
+            trackLastSelectedMode('race');
+        });
+
+        document.getElementById('normalTab').addEventListener('click', () => {
+            trackLastSelectedMode('normal');
+        });
+
+        // Clear the inputs for Debug mode
+        document.getElementById('clearDebugButton').addEventListener('click', () => {
+            clearModeInputs('debug');
+        });
+
+        // Clear the inputs for Race mode
+        document.getElementById('clearRaceButton').addEventListener('click', () => {
+            clearModeInputs('race');
+        });
+
+        // Clear the inputs for Normal mode
+        document.getElementById('clearNormalButton').addEventListener('click', () => {
+            clearModeInputs('normal');
+        });
+
+        // Load form-container values from localStorage when the page is loaded
+        window.addEventListener('load', () => {
+            document.querySelectorAll('.form-container input').forEach(input => {
+                const storedValue = localStorage.getItem(input.id);
+                if (storedValue !== null) {
+                    input.value = storedValue;
+                }
+            });
+        });
+
+        document.getElementById('resetTrajectoryBtn').addEventListener('click', () => {
+            trajectoryChart.data.datasets[0].data = []; // Clear path
+            trajectoryChart.data.datasets[1].data = []; // Clear car position dot
+            trajectoryChart.update();
+        });
+
+        document.getElementById('exportTrajectoryBtn').addEventListener('click', () => {
+            const data = trajectoryChart.data.datasets[0].data;
+            if (!data.length) {
+                alert("No trajectory data to export.");
+                return;
+            }
+
+            const csvContent = "data:text/csv;charset=utf-8," +
+                "X,Y\n" +
+                data.map(p => `${p.x},${p.y}`).join("\n");
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "trajectory.csv");
+            document.body.appendChild(link); // Required for Firefox
+
+            link.click();
+            document.body.removeChild(link);
+        });
+
+
+        document.title = "Car Monitor - " + carIPv4; // updates <title>
+        document.getElementById("pageTitle").textContent = "Monitoring: " + carIPv4;  // updates <h1>
+
+
+
+        let simulationMode = false;
+        const simulationToggle = document.getElementById('simulationModeToggle');
+        simulationToggle.addEventListener('change', () => {
+            simulationMode = simulationToggle.checked;
+        });
+
+        // Add event listeners to save data when user types
+        document.querySelectorAll('input[type="number"]').forEach(input => {
+            input.addEventListener('input', saveDataToLocalStorage);
+        });
+
+        // Save form-container inputs to localStorage whenever they change
+        document.querySelectorAll('.form-container input').forEach(input => {
+            input.addEventListener('input', () => {
+                localStorage.setItem(input.id, input.value);
+            });
+        });
+
+        // Load form-container values from localStorage when the page is loaded
+        window.addEventListener('load', () => {
+            document.querySelectorAll('.form-container input').forEach(input => {
+                const storedValue = localStorage.getItem(input.id);
+                if (storedValue !== null) {
+                    input.value = storedValue;
+                }
+            });
+        });
+
+        window.addEventListener('load', () => {
+            const defaults = {
+                lane_width_vector_unit_real: 53.0,
+                enable_car_engine: 0,
+                lookahead_min_distance_cm: 22.0,
+                lookahead_max_distance_cm: 50.0,
+                emergency_break_distance_cm: 10.0,
+                min_speed: 115.0,
+                max_speed: 135.0,
+                black_color_treshold: 0.2,
+                enable_car_steering_wheel: 0,
+                emergency_brake_min_speed: 97.0,
+                emergency_brake_distance_from_obstacle_cm: 9.0,
+                enable_emergency_brake: 0,
+                enable_pixy_vector_approximation_soft: 0,
+                enable_distance_sensor1_soft: 1,
+                enable_distance_sensor2_soft: 1,
+                enable_distance_sensor3_soft: 1,
+                emergency_brake_enable_delay: 10.0,
+                steering_wheel_angle_offset: 0.0,
+                min_axis_angle_vector: 25.0,
+                max_speed_after_emergency_brake_delay: 110.0,
+                enable_remote_start_stop_soft: 0,
+                car_speed_ki: -0.02,
+                car_speed_kd: -0.2,
+                car_speed_ki_min_max_impact: 5,
+                max_error_angle_degrees: 25.0,
+                enable_finish_line_detection: 0,
+            };
+
+            Object.keys(defaults).forEach(id => {
+                const input = document.getElementById(id);
+                if (input && input.value === "") {
+                    input.value = defaults[id];
+                }
+            });
+        });
+//****************************************************************************************************************
+//****************************************************************************************************************
+//******************************************* FUNCTIONS **********************************************************
+//****************************************************************************************************************
+//****************************************************************************************************************
+
+        ws.onerror = function(event) {
+            console.error('WebSocket error:', event);
+        };
+      
+        
+        ws.onmessage = function(event) {
+            if (!simulationMode) { 
+            const data = ParseCarDataToJSON(event.data);
+            const readData = ReadAllCarParameters(event.readdata);
+            updateChart(data); 
+            total_messages_recv += 1;
+            updateTrajectoryChart(data.carSpeed, data.steeringAngle, data.laneMiddleLine, readData.enable_car_engine);
+            }
+        };
+
+
+        function SendParametersToCar(websocket, parameters){
+            // Convert data to CSV format
+            const csvData = Object.values(parameters).join(';') + "\r\n";
+            websocket.send(csvData);  // Send the CSV formatted data via WebSocket
+        }
+
+
+        function ReadAllCarParameters(){
+            let data = {
+                lane_width_vector_unit_real: document.getElementById('lane_width_vector_unit_real').value,
+                lookahead_min_distance_cm: document.getElementById('lookahead_min_distance_cm').value,
+                lookahead_max_distance_cm: document.getElementById('lookahead_max_distance_cm').value,
+                emergency_break_distance_cm: document.getElementById('emergency_break_distance_cm').value,
+                min_speed: document.getElementById('min_speed').value,
+                max_speed: document.getElementById('max_speed').value,
+                black_color_treshold: document.getElementById('black_color_treshold').value,
+
+                car_length_cm: 17.5, // hardcoded foe ensuring order of parameters
+
+                enable_car_engine: document.getElementById('enable_car_engine').value,
+                enable_car_steering_wheel: document.getElementById('enable_car_steering_wheel').value,
+                emergency_brake_min_speed: document.getElementById('emergency_brake_min_speed').value,
+                emergency_brake_distance_from_obstacle_cm: document.getElementById('emergency_brake_distance_from_obstacle_cm').value,
+                enable_emergency_brake: document.getElementById('enable_emergency_brake').value,
+                enable_pixy_vector_approximation_soft: document.getElementById('enable_pixy_vector_approximation_soft').value,
+                enable_distance_sensor1_soft: document.getElementById('enable_distance_sensor1_soft').value,
+                enable_distance_sensor2_soft: document.getElementById('enable_distance_sensor2_soft').value,
+                emergency_brake_enable_delay: document.getElementById('emergency_brake_enable_delay').value,
+                steering_wheel_angle_offset: document.getElementById('steering_wheel_angle_offset').value,
+                enable_distance_sensor3_soft: document.getElementById('enable_distance_sensor3_soft').value,
+                min_axis_angle_vector: document.getElementById('min_axis_angle_vector').value,
+                max_speed_after_emergency_brake_delay: document.getElementById('max_speed_after_emergency_brake_delay').value,
+                enable_remote_start_stop_soft: document.getElementById('enable_remote_start_stop_soft').value,
+                car_speed_ki: document.getElementById('car_speed_ki').value,
+                car_speed_kd: document.getElementById('car_speed_kd').value,
+                car_speed_ki_min_max_impact: document.getElementById('car_speed_ki_min_max_impact').value,
+                max_error_angle_degrees: document.getElementById('max_error_angle_degrees').value,
+                enable_finish_line_detection: document.getElementById('enable_finish_line_detection').value,
+            };
+            return data;
+        }
+
+
+        function ParseCarDataToJSON(raw_data){
+            //-60,-60,-30,-30; 30,-60,60,-30; -60,-60,-30,-30; 30,-60,60,-30; -1.0,1.0,10.0; 1.0,-1.0,-50.0;
+            //-15,-60,15,-30; -45,-45,-35,-45; 35,-45,45,-45; -0.05; 1.0; 100.0; 60.0; 120.0; 1; -40,-45,-35,-45;
+            //35,-45,40,-45; 1; 24.00; +6 more
+
+            let parsedData = {};
+            try {
+                if (raw_data[0] === '%') {
+                    return parsedData;
+                }
+                let tempField;
+                const fields = raw_data.split(';');
+                console.log('Fields:', fields);
+
+                if (fields.length >= 17) {
+                    tempField = fields[1].split(',').map(Number);
+                    parsedData.leftVectorOld = [{ x: tempField[0], y: tempField[1] },
+                                                { x: tempField[2], y: tempField[3] }];
+
+                    tempField = fields[2].split(',').map(Number);
+                    parsedData.rightVectorOld = [{ x: tempField[0], y: tempField[1] },
+                                                 { x: tempField[2], y: tempField[3] }];
+                    
+                    tempField = fields[3].split(',').map(Number);
+                    parsedData.leftVector = [{ x: tempField[0], y: tempField[1] },
+                                             { x: tempField[2], y: tempField[3] }];
+                
+                    tempField = fields[4].split(',').map(Number);
+                    parsedData.rightVector = [{ x: tempField[0], y: tempField[1] },
+                                              { x: tempField[2], y: tempField[3] }];
+                
+                    tempField = fields[5].split(',').map(Number);
+                    parsedData.leftLine = { a: tempField[0], b: tempField[1], c: tempField[2] };
+                
+                    tempField = fields[6].split(',').map(Number);
+                    parsedData.rightLine = { a: tempField[0], b: tempField[1], c: tempField[2] };
+
+
+
+                    tempField = fields[7].split(',').map(Number);
+                    // Extract the line equation components
+                    let Ax = tempField[0];
+                    let By = tempField[1];
+                    let C = tempField[2];
+                    // Define two points based on the chart boundaries
+                    let x1 = 0;
+                    let y1 = (-C - Ax * x1) / By; // Solve for y when x = 0
+                    let x2 = 80; // Assuming the max x is 80
+                    let y2 = (-C - Ax * x2) / By; // Solve for y when x = max_x
+                    // Store computed points
+                    parsedData.laneMiddleLine = [
+                        { x: x1, y: y1 },
+                        { x: x2, y: y2 }
+                    ];
+
+
+                    tempField = fields[8].split(',').map(Number);
+                    parsedData.carPos = { x: tempField[0], y: tempField[1] };
+
+                    tempField = fields[9].split(',').map(Number);
+                    parsedData.nextWayPoint = { x: tempField[0], y: tempField[1] };
+
+                    parsedData.steeringAngle = Number(fields[10]);            // degrees
+                    parsedData.carAcceleration = Number(fields[11]);         // percentual
+                    parsedData.frontObstacleDistance = Number(fields[12]);   // cm
+                    parsedData.lookAheadDistance = Number(fields[13]);       // cm
+                    parsedData.carSpeed = Number(fields[14]);                // raw
+                    parsedData.loop_time = Number(fields[15]);               // ms
+                    parsedData.finish_line_detected = Number(fields[16]);    // boolean 1/0
+
+                    tempField = fields[17].split(',').map(Number);
+                    parsedData.finish_line_left = [{ x: tempField[0], y: tempField[1] },
+                                                   { x: tempField[2], y: tempField[3] }];
+
+                    tempField = fields[18].split(',').map(Number);
+                    parsedData.finish_line_right = [{ x: tempField[0], y: tempField[1] },
+                                                    { x: tempField[2], y: tempField[3] }];
+                    
+                    // !!!!!!!!!parsedData.finish_line_detected_now = Number(fields[19]);   // boolean 1/0
+                    
+                } else {
+                    console.error('Insufficient fields:', fields);
+                }
+            } catch (error) {
+                console.error('Error parsing data:', error, 'Raw data:', raw_data);
+            }
+            return parsedData;
+        }
+
+
+        function updateChart(data) {
+            if (Object.keys(data).length === 0) {
+                return;
+            }
+            chart.data.datasets[0].data = data.leftVector;
+            chart.data.datasets[1].data = data.rightVector;
+            chart.data.datasets[2].data = data.laneMiddleLine;
+            chart.data.datasets[3].data = data.finish_line_left;
+            chart.data.datasets[4].data = data.finish_line_right;
+            LoopTime.textContent = "Loop time [ms]:" + data.loop_time;
+            finishLineDetectedNow.textContent = "Finish line detected now: " + data.finish_line_detected;
+
+            if (data.finish_line_detected === 1) {
+                persistentFinishLineDetected = 1;
+            }
+            finishLineDetected.textContent = "Finish line detected in a run: " + persistentFinishLineDetected;
+
+            chart.update();
+
+            // Update real-time parameters
+            document.getElementById('realTimeSteeringAngle').textContent = data.steeringAngle;
+            document.getElementById('realTimeCarAcceleration').textContent = data.carAcceleration;
+            document.getElementById('realTimeFrontObstacleDistance').textContent = data.frontObstacleDistance;
+            document.getElementById('realTimeLookAheadDistance').textContent = data.lookAheadDistance;
+            document.getElementById('realTimeCarSpeed').textContent = data.carSpeed;
+            document.getElementById('realTimeLoopTime').textContent = data.loop_time;
+        }
+
+
+        let currentX = 40;
+        let currentY = 26;
+        let carHeading = 0; // in radians
+        let lastTimestamp = null;
+        function updateTrajectoryChart(carSpeed, steeringAngle, laneMiddleLine, enable_car_engine) {
+            const now = Date.now();
+            const deltaTime = lastTimestamp ? (now - lastTimestamp) / 1000 : 0.05;
+            lastTimestamp = now;
+
+            if (!enable_car_engine || isNaN(carSpeed) || carSpeed <= 0) return;
+
+            // Safe clamp for realistic steering angle
+            if (Math.abs(steeringAngle) > 89) steeringAngle = 89;
+
+            // Convert degrees to radians
+            const angleRad = steeringAngle * Math.PI / 180;
+
+            // Car params
+            const carLength = 17.5; // cm
+
+            // Calculate turning radius
+            const turningRadius = Math.abs(angleRad) > 0.01 ? carLength / Math.tan(angleRad) : Infinity;
+
+            // Angle change = ω * t
+            let angleChange = turningRadius !== Infinity ? (carSpeed / turningRadius) * deltaTime : 0;
+
+            // Apply angle sign (left/right)
+            carHeading += angleChange * Math.sign(steeringAngle);
+
+            // Move car forward in the current heading
+            const deltaX = carSpeed * deltaTime * Math.cos(carHeading);
+            const deltaY = carSpeed * deltaTime * Math.sin(carHeading);
+
+            currentX += deltaX;
+            currentY += deltaY;
+
+            trajectoryChart.data.datasets[0].data.push({ x: currentX, y: currentY });
+            trajectoryChart.data.datasets[1].data = [{ x: currentX, y: currentY }];
+            trajectoryChart.update();
+        }
+
+
+        function showTab(content) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none');
+            content.style.display = 'block';
+        }
+
+       
+        function toggleTab(content, tabId) {
+            // If the tab is already open, collapse it
+            if (lastOpenedTab === tabId) {
+                content.style.display = 'none'; // Collapse the content
+                lastOpenedTab = null; // Reset last opened tab
+            } else {
+                // Hide all tab contents
+                document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none');
+                
+                // Show the selected tab
+                content.style.display = 'flex'; // Display in flex layout to ensure columns work
+                lastOpenedTab = tabId; // Track the last opened tab
+            }
+        }
+     
+        
+        // Function to track the last selected mode
+        function trackLastSelectedMode(mode) {
+            localStorage.setItem('lastSelectedMode', mode);  // Store the mode in localStorage
+        }
+
+
+        // Function to save form data into localStorage
+        function saveDataToLocalStorage() {
+            let inputs = document.querySelectorAll('input[type="number"]');
+            inputs.forEach(input => {
+                localStorage.setItem(input.id, input.value);
+            });
+        }
+
+        // Function to load form data from localStorage
+        function loadDataFromLocalStorage() {
+            let inputs = document.querySelectorAll('input[type="number"]');
+            inputs.forEach(input => {
+                let storedValue = localStorage.getItem(input.id);
+                if (storedValue !== null) {
+                    input.value = storedValue;
+                }
+            });
+        }
+
+
+        // Function to sync data from the mode inputs to the main form-container
+        function syncToFormContainer(mode) {
+            //let modePrefix = mode; // e.g., 'debug', 'race', 'normal'
+
+            // Sync each mode input to the corresponding form-container input
+            document.querySelectorAll(`#${mode}Content input`).forEach((modeInput) => {
+                let mainInputId = modeInput.id.replace(`${mode}_`, ''); // Remove the mode prefix
+                let mainInput = document.getElementById(mainInputId);    // Get the main form input without the prefix
+
+                if (mainInput) {  // Check if the main input exists
+                    mainInput.value = modeInput.value;  // Sync the value
+                } else {
+                    console.warn(`Input with ID ${mainInputId} not found in form-container.`);
+                }
+            });
+        }
+
+
+        // Function to save the form-container data after sending mode data
+        function saveFormContainerData() {
+            const inputs = document.querySelectorAll('.form-container input');
+            inputs.forEach(input => {
+                localStorage.setItem(input.id, input.value);
+            });
+        }
+
+
+        function updateFps(){
+            fps = (total_messages_recv / fps_refresh_ms)*1000;
+            kFps.textContent = fps + " FPS";
+            total_messages_recv = 0;
+        }
+
+
+        // Update the display every second
+        setInterval(updateFps, fps_refresh_ms);
+
+        // Simulation Mode: Inject fake PixyCam2 + sensor data
+        setInterval(() => {
+            if (simulationMode) {
+                const fakeData = generateSimulatedData();
+                updateChart(fakeData);
+                total_messages_recv++;
+            }
+        }, 100); // update every 100 ms
+
+
+        function dragElement(element) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+
+            if (document.getElementById(element.id + "Header")) {
+                document.getElementById(element.id + "Header").onmousedown = dragMouseDown;
+            } else {
+                element.onmousedown = dragMouseDown;
+            }
+
+            function dragMouseDown(e) {
+                // Prevent dragging if the target is an input element
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') {
+                    return;
+                }
+        
+                e = e || window.event;
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+            }
+
+            function elementDrag(e) {
+                e = e || window.event;
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                element.style.top = (element.offsetTop - pos2) + "px";
+                element.style.left = (element.offsetLeft - pos1) + "px";
+            }
+
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+            }
+        }
+
+
+        // Function to clear the inputs of a specific mode
+        function clearModeInputs(mode) {
+            const inputs = document.querySelectorAll(`#${mode}Content input[type="number"]`);
+            inputs.forEach(input => {
+                input.value = ''; // Clear the input value
+                localStorage.removeItem(input.id); // Remove the value from localStorage
+            });
+        }
+        
+        
+        function generateSimulatedData() {
+            const now = Date.now() / 1000;
+
+            // Simulate left and right vectors (2 points each)
+            const leftVector = [
+                { x: 10+ 5 * Math.sin(now), y: 10 + 5 * Math.sin(now) },
+                { x: 20+ 5 * Math.sin(now), y: 30 + 5 * Math.sin(now) }
+            ];
+            const rightVector = [
+                { x: 60+ 5 * Math.sin(now), y: 10 + 5 * Math.cos(now) },
+                { x: 70+ 5 * Math.sin(now), y: 30 + 5 * Math.cos(now) }
+            ];
+
+            // Calculate middle line from left and right vectors
+            const middleLine = [
+                {
+                    x: (leftVector[0].x + rightVector[0].x) / 2,
+                    y: (leftVector[0].y + rightVector[0].y) / 2
+                },
+                {
+                    x: (leftVector[1].x + rightVector[1].x) / 2,
+                    y: (leftVector[1].y + rightVector[1].y) / 2
+                }
+            ];
+
+            return {
+                leftVector: leftVector,
+                rightVector: rightVector,
+                laneMiddleLine: middleLine,
+                finish_line_left: [
+                    { x: 20, y: 40 },
+                    { x: 30, y: 40 }
+                ],
+                finish_line_right: [
+                    { x: 40, y: 40 },
+                    { x: 50, y: 40 }
+                ],
+                steeringAngle: (Math.sin(now) * 45).toFixed(2),
+                carAcceleration: (Math.cos(now) * 100).toFixed(2),
+                frontObstacleDistance: (100 + 20 * Math.cos(now)).toFixed(2),
+                lookAheadDistance: (50 + 10 * Math.sin(now)).toFixed(2),
+                carSpeed: (40 + 10 * Math.sin(now)).toFixed(2),
+                loop_time: 30 + Math.round(10 * Math.random()),
+                finish_line_detected: Math.random() > 0.95 ? 1 : 0
+            };
+        }
+    </script>
+</body>
+</html>
